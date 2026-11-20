@@ -7260,6 +7260,8 @@ dependencies = [
  "serde",
  "serde_json",
  "soil",
+ "soil-actions-host",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
