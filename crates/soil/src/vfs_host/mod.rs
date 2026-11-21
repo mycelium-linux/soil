@@ -346,7 +346,7 @@ impl VfsHost {
         self.index.lock().expect("index poisoned")
     }
 
-    fn read_path(&self, path: &str, offset: u64, length: u32) -> Result<Vec<u8>, vfs::Error> {
+    fn read_path(&self, path: &str, offset: u64, length: u32) -> Result<(Vec<u8>, u64), vfs::Error> {
         if length == 0 || length > MAX_RANGE {
             return Err(vfs::Error::OverBudget);
         }
@@ -366,8 +366,9 @@ impl VfsHost {
         if start > bytes.len() {
             return Err(vfs::Error::Invalid);
         }
+        let total = bytes.len() as u64;
         let end = start.saturating_add(length as usize).min(bytes.len());
-        Ok(bytes.drain(start..end).collect())
+        Ok((bytes.drain(start..end).collect(), total))
     }
 }
 
@@ -502,33 +503,15 @@ impl vfs::Host for VfsHost {
 
     fn read(&mut self, path: String, offset: u64, length: u32) -> Result<vfs::Chunk, vfs::Error> {
         let path = normalize_parent(&path)?;
-        // A read is the hot path for every capture bundle. Refreshing the whole
-        // namespace here made every file read list every path; only refresh
-        // when the index genuinely does not know this file yet.
-        let existing = self.index_read().entry(&path).map(|node| {
-            (
-                node.kind,
-                node.entry.content_id.to_string(),
-                node.entry.size,
-            )
-        });
-        let (kind, content_id, size) = match existing {
-            Some(found) => found,
-            None => {
-                self.refresh_view().map_err(|_| vfs::Error::Io)?;
-                let index = self.index_read();
-                let node = index.entry(&path).ok_or(vfs::Error::NotFound)?;
-                (
-                    node.kind,
-                    node.entry.content_id.to_string(),
-                    node.entry.size,
-                )
-            }
-        };
-        if kind != NodeKind::File {
-            return Err(vfs::Error::IsDirectory);
-        }
-        let data = self.read_path(&path, offset, length)?;
+        // A read is the hot path for every capture bundle. The VFS is the
+        // authority for bytes; the derived index is not needed to serve them.
+        // Refreshing it here listed and rehashed the whole namespace per file.
+        let (data, size) = self.read_path(&path, offset, length)?;
+        let content_id = self
+            .index_read()
+            .entry(&path)
+            .map(|node| node.entry.content_id.to_string())
+            .unwrap_or_default();
         Ok(vfs::Chunk {
             offset,
             eof: offset.saturating_add(data.len() as u64) >= size,
