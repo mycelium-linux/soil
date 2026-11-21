@@ -18,6 +18,8 @@ backends. This is the language side of Soil; the host and capabilities live in
 - `witgen.rs` — WIT -> `.soil` binding stubs.
 - `bindings/` — generated Soil capability bindings.
 - `stdlib/prelude.soil` — list, JSON, records, and time helpers.
+- `stdlib/ui.soil` — UI forms, HTML escaping, `render-html`, and `render-page`.
+- `stdlib/highlight.soil` — a Soil tokenizer that emits highlighted form nodes.
 - `boot/boot.soil` — the first evaluator written in Soil: environments,
   binding, special forms, application, and a primitive table. This is the seed
   for Phase 7 self-hosting, not the finished bootstrap.
@@ -96,6 +98,7 @@ and WIT behavior tests in Lisp and avoids one Rust test binary per area.
 `tests/soil/boot.soil` covers the bootstrap evaluator.
 `tests/soil/prelude.soil` covers list/JSON helpers.
 `tests/soil/wit_call.soil` calls `soil:time` and `soil:records` from Lisp.
+`tests/soil/ui.soil` covers HTML escaping, form rendering, and highlighting.
 `tests/jmc.rs` runs McCarthy's `eval.` in the interpreter.
 `tests/jmc_wasm.rs` compiles the same `eval.` and runs it on wasmtime.
 `tests/fixtures/jmc.lisp` is Paul Graham's CL translation of McCarthy's 1960

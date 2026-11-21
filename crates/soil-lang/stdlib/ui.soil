@@ -1,0 +1,103 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Soil UI forms and HTML rendering.
+;
+; A form is a record tree:
+;
+;   ((:tag "div") (:attrs ((:class "app"))) (:children (...)))
+;   ((:text "hello"))
+;   ((:raw "<span>...</span>"))
+;
+; This file owns the form constructors and the HTML serializer. Hosts that
+; render to DOM, a native surface, or a GPU scene use the same forms; only
+; `render-html` is specific to HTML.
+
+(defun el (tag attrs children)
+  (list
+    (list :tag tag)
+    (list :attrs attrs)
+    (list :children children)))
+
+(defun attr (key value)
+  (list key value))
+
+(defun txt (value)
+  (list (list :text (str value))))
+
+;; Explicit escape hatch for pre-rendered markup. Never pass untrusted input.
+(defun raw (html)
+  (list (list :raw (str html))))
+
+(defun html-escape (text)
+  (string-replace
+    (string-replace
+      (string-replace (str text) "&" "&amp;")
+      "<" "&lt;")
+    ">" "&gt;"))
+
+(defun attr-escape (value)
+  (string-replace (html-escape value) "\"" "&quot;"))
+
+(defun attr-name (key)
+  (string-replace (str key) ":" ""))
+
+(defun render-attr (pair)
+  (let ((key (attr-name (first pair)))
+        (value (first (rest pair))))
+    (cond
+      ((nil? value) "")
+      ((= value #t) (str " " key))
+      ((= value #f) "")
+      (else (str " " key "=\"" (attr-escape value) "\"")))))
+
+(defun render-attrs (attrs)
+  (if (nil? attrs)
+      ""
+      (string-join (map 'render-attr attrs) "")))
+
+(defun void-element? (tag)
+  (or
+    (= tag "area")
+    (= tag "base")
+    (= tag "br")
+    (= tag "col")
+    (= tag "embed")
+    (= tag "hr")
+    (= tag "img")
+    (= tag "input")
+    (= tag "link")
+    (= tag "meta")
+    (= tag "param")
+    (= tag "source")
+    (= tag "track")
+    (= tag "wbr")))
+
+(defun render-tag (form)
+  (let ((tag (field form :tag))
+        (attrs (render-attrs (field form :attrs)))
+        (children (field form :children)))
+    (if (void-element? tag)
+        (str "<" tag attrs ">")
+        (str "<" tag attrs ">"
+             (string-join (map 'render-html children) "")
+             "</" tag ">"))))
+
+(defun render-html (form)
+  (cond
+    ((nil? form) "")
+    ((not (nil? (field form :text))) (html-escape (field form :text)))
+    ((not (nil? (field form :raw))) (field form :raw))
+    ((not (nil? (field form :tag))) (render-tag form))
+    (else (string-join (map 'render-html form) ""))))
+
+(defun render-page (title styles body)
+  (str
+    "<!doctype html>\n"
+    "<html lang=\"en\">\n"
+    "<head>\n"
+    "<meta charset=\"utf-8\">\n"
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+    "<title>" (html-escape title) "</title>\n"
+    "<style>\nbody { margin: 0; }\n" styles "\n</style>\n"
+    "</head>\n"
+    "<body>\n" (render-html body) "\n</body>\n"
+    "</html>\n"))

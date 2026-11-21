@@ -368,6 +368,51 @@ impl Runtime {
                         };
                         Ok(Value::Bool(haystack.contains(needle)))
                     }
+                    "string-replace" => {
+                        let text = self.eval(require(items, 1, "string-replace")?, env)?;
+                        let from = self.eval(require(items, 2, "string-replace")?, env)?;
+                        let to = self.eval(require(items, 3, "string-replace")?, env)?;
+                        let Some(text) = text.as_str() else {
+                            bail!("string-replace expects a string");
+                        };
+                        let Some(from) = from.as_str() else {
+                            bail!("string-replace expects a search string");
+                        };
+                        let Some(to) = to.as_str() else {
+                            bail!("string-replace expects a replacement string");
+                        };
+                        Ok(Value::String(text.replace(from, to)))
+                    }
+                    "string-chars" => {
+                        let text = self.eval(require(items, 1, "string-chars")?, env)?;
+                        let Some(text) = text.as_str() else {
+                            bail!("string-chars expects a string");
+                        };
+                        Ok(Value::List(
+                            text.chars()
+                                .map(|character| Value::String(character.to_string()))
+                                .collect(),
+                        ))
+                    }
+                    "string-join" => {
+                        let values = self.eval(require(items, 1, "string-join")?, env)?;
+                        let separator = self.eval(require(items, 2, "string-join")?, env)?;
+                        let Some(separator) = separator.as_str() else {
+                            bail!("string-join expects a separator string");
+                        };
+                        let values = match values {
+                            Value::Nil => Vec::new(),
+                            Value::List(values) => values,
+                            _ => bail!("string-join expects a list"),
+                        };
+                        Ok(Value::String(
+                            values
+                                .iter()
+                                .map(value_text)
+                                .collect::<Vec<_>>()
+                                .join(separator),
+                        ))
+                    }
                     "json-decode" => {
                         let value = self.eval(require(items, 1, "json-decode")?, env)?;
                         let bytes = value_bytes(&value)?;
@@ -573,7 +618,11 @@ fn value_bytes(value: &Value) -> Result<Vec<u8>> {
     }
 }
 
-fn json_to_value(json: &serde_json::Value) -> Value {
+/// Decode a JSON value into the record/list shape Soil uses.
+///
+/// JSON objects become lists of `(keyword value)` pairs, matching
+/// `json-decode` and the UI form encoding.
+pub fn json_to_value(json: &serde_json::Value) -> Value {
     match json {
         serde_json::Value::Null => Value::Nil,
         serde_json::Value::Bool(value) => Value::Bool(*value),

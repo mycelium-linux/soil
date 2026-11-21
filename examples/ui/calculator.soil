@@ -1,0 +1,158 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Calculator: a numeric state machine with no parser and no dependencies.
+
+(defun calc-state (display acc op fresh)
+  (list
+    (list :display display)
+    (list :acc acc)
+    (list :op op)
+    (list :fresh fresh)))
+
+(defun initial-state ()
+  (calc-state "0" 0 nil #t))
+
+(defun current-value (state)
+  (if (= (field state :display) "ERR")
+      0
+      (json-decode (field state :display))))
+
+(defun calc-op (op acc value)
+  (cond
+    ((= op "+") (+ acc value))
+    ((= op "-") (- acc value))
+    ((= op "*") (* acc value))
+    ((= op "/") (if (= value 0) nil (/ acc value)))
+    (else value)))
+
+(defun calc-digit (state value)
+  (let ((display (field state :display))
+        (fresh (field state :fresh)))
+    (cond
+      ((= display "ERR")
+        (calc-state value 0 nil #f))
+      (fresh
+        (calc-state value (field state :acc) (field state :op) #f))
+      ((= display "0")
+        (calc-state value (field state :acc) (field state :op) #f))
+      (else
+        (calc-state (str display value)
+                    (field state :acc)
+                    (field state :op)
+                    #f)))))
+
+(defun calc-choose (state op)
+  (let ((current (current-value state))
+        (pending (field state :op))
+        (acc (field state :acc)))
+    (if (nil? pending)
+        (calc-state (str current) current op #t)
+        (let ((result (calc-op pending acc current)))
+          (if (nil? result)
+              (calc-state "ERR" 0 nil #t)
+              (calc-state (str result) result op #t))))))
+
+(defun calc-equals (state)
+  (let ((current (current-value state))
+        (pending (field state :op))
+        (acc (field state :acc)))
+    (if (nil? pending)
+        (calc-state (str current) current nil #t)
+        (let ((result (calc-op pending acc current)))
+          (if (nil? result)
+              (calc-state "ERR" 0 nil #t)
+              (calc-state (str result) result nil #t))))))
+
+(defun calc-negate (state)
+  (let ((current (current-value state)))
+    (calc-state (str (- 0 current)) (- 0 current) (field state :op) #f)))
+
+(defun update (state action)
+  (let ((op (action-op action)))
+    (cond
+      ((= op "digit") (calc-digit state (action-field action :value "0")))
+      ((= op "op") (calc-choose state (action-field action :value "+")))
+      ((= op "equals") (calc-equals state))
+      ((= op "negate") (calc-negate state))
+      ((= op "clear") (initial-state))
+      (else state))))
+
+(defun key (label op value class)
+  (el "button"
+    (list
+      (attr :class class)
+      (attr :data-op op)
+      (attr :data-value value))
+    (list (txt label))))
+
+(defun digit-key (label)
+  (key label "digit" label "key"))
+
+(defun op-key (label op)
+  (key label "op" op "key op"))
+
+(defun view (state)
+  (el "div" (list (attr :class "app"))
+    (list
+      (el "header" (list (attr :class "topbar"))
+        (list
+          (el "div" (list (attr :class "brand"))
+            (list
+              (txt "SOIL")
+              (el "span" (list (attr :class "brand-sub"))
+                (list (txt "calculator")))))
+          (el "div" (list (attr :class "pill"))
+            (list (txt "state machine")))))
+      (el "main" (list (attr :class "stage"))
+        (list
+          (el "section" (list (attr :class "card calc-card"))
+            (list
+              (el "p" (list (attr :class "eyebrow"))
+                (list (txt "CALCULATOR")))
+              (el "output" (list (attr :class "display"))
+                (list (txt (field state :display))))
+              (el "div" (list (attr :class "keys"))
+                (list
+                  (key "C" "clear" "" "key fn")
+                  (key "±" "negate" "" "key fn")
+                  (op-key "÷" "/")
+                  (op-key "×" "*")
+                  (digit-key "7")
+                  (digit-key "8")
+                  (digit-key "9")
+                  (op-key "−" "-")
+                  (digit-key "4")
+                  (digit-key "5")
+                  (digit-key "6")
+                  (op-key "+" "+")
+                  (digit-key "1")
+                  (digit-key "2")
+                  (digit-key "3")
+                  (key "=" "equals" "" "key equals")
+                  (key "0" "digit" "0" "key zero"))))))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".calc-card { max-width: 420px; }\n"
+    ".display {\n"
+    "  display: block; margin: 18px 0 20px; padding: 18px 16px;\n"
+    "  border: 1px solid var(--line); border-radius: 14px;\n"
+    "  background: #0d1016; color: var(--ink);\n"
+    "  font: 600 clamp(32px, 8vw, 52px)/1 ui-monospace, SFMono-Regular, Menlo, monospace;\n"
+    "  text-align: right; letter-spacing: -.03em; font-variant-numeric: tabular-nums;\n"
+    "  overflow: hidden; text-overflow: ellipsis;\n"
+    "}\n"
+    ".keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }\n"
+    ".key {\n"
+    "  padding: 16px 0; border: 1px solid var(--line); border-radius: 12px;\n"
+    "  background: rgba(255,255,255,.045); color: var(--ink); cursor: pointer;\n"
+    "  font: 600 18px/1 ui-sans-serif, system-ui, sans-serif;\n"
+    "  transition: transform .08s ease, background .15s ease;\n"
+    "}\n"
+    ".key:hover { background: rgba(255,255,255,.09); }\n"
+    ".key:active { transform: translateY(1px); }\n"
+    ".key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }\n"
+    ".key.fn { color: var(--muted); }\n"
+    ".key.op { color: var(--accent); }\n"
+    ".key.equals { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n"
+    ".key.zero { grid-column: span 4; }\n"))

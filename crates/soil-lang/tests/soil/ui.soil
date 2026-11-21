@@ -1,0 +1,36 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; UI forms, HTML escaping, and the Soil highlighter.
+
+(defun test/ui-escape ()
+  (= (render-html (el "p" (list (attr :class "a&b")) (list (txt "x < y & z"))))
+     "<p class=\"a&amp;b\">x &lt; y &amp; z</p>"))
+
+(defun test/ui-void-and-fragment ()
+  (and
+    (= (render-html (el "input" (list (attr :name "x") (attr :disabled #t)) nil))
+       "<input name=\"x\" disabled>")
+    (= (render-html (list (el "b" nil (list (txt "1"))) (txt "2")))
+       "<b>1</b>2")))
+
+(defun test/ui-page ()
+  (let ((page (render-page "A < B" "body { color: red; }" (txt "hello"))))
+    (and
+      (string-contains? page "<!doctype html>")
+      (string-contains? page "<title>A &lt; B</title>")
+      (string-contains? page "body { color: red; }")
+      (string-contains? page "hello"))))
+
+(defun test/ui-highlight ()
+  (let ((html (render-html
+                (code-block "(defun view (state)\n  (el \"div\" nil (list (txt \"hi\"))))\n; note\n"))))
+    (and
+      (string-contains? html "tok-special")
+      (string-contains? html "tok-fn")
+      (string-contains? html "tok-string")
+      (string-contains? html "tok-comment"))))
+
+(defun test/ui-string-primitives ()
+  (and
+    (= (string-replace "a-b-a" "a" "x") "x-b-x")
+    (= (string-join (list "a" "b") "-") "a-b")
+    (= (string-chars "ab") (list "a" "b"))))

@@ -51,6 +51,70 @@
 (defun reverse (xs)
   (reverse-into xs nil))
 
+;;; Generic list helpers used by UI examples and spores.
+
+(defun nth (n xs)
+  (cond
+    ((nil? xs) nil)
+    ((<= n 0) (first xs))
+    (else (nth (- n 1) (rest xs)))))
+
+(defun list-set (n value xs)
+  (cond
+    ((nil? xs) nil)
+    ((<= n 0) (cons value (rest xs)))
+    (else (cons (first xs) (list-set (- n 1) value (rest xs))))))
+
+(defun range-into (i end out)
+  (if (>= i end)
+      (reverse out)
+      (range-into (+ i 1) end (cons i out))))
+
+(defun range (start end)
+  (range-into start end nil))
+
+(defun map-with (f arg xs)
+  (if (nil? xs)
+      nil
+      (cons (apply f (list (first xs) arg)) (map-with f arg (rest xs)))))
+
+(defun filter-with (p arg xs)
+  (cond
+    ((nil? xs) nil)
+    ((apply p (list (first xs) arg)) (cons (first xs) (filter-with p arg (rest xs))))
+    (else (filter-with p arg (rest xs)))))
+
+(defun take-while (pred xs)
+  (if (nil? xs)
+      nil
+      (if (apply pred (list (first xs)))
+          (cons (first xs) (take-while pred (rest xs)))
+          nil)))
+
+(defun drop-while (pred xs)
+  (cond
+    ((nil? xs) nil)
+    ((apply pred (list (first xs))) (drop-while pred (rest xs)))
+    (else xs)))
+
+(defun last-of (xs)
+  (if (nil? (rest xs))
+      (first xs)
+      (last-of (rest xs))))
+
+(defun reduce (f acc xs)
+  (if (nil? xs)
+      acc
+      (reduce f (apply f (list acc (first xs))) (rest xs))))
+
+(defun assoc (key value record)
+  (if (nil? record)
+      nil
+      (let ((pair (first record)))
+        (if (= (first pair) key)
+            (cons (list key value) (rest record))
+            (cons pair (assoc key value (rest record)))))))
+
 (defun json-get (value key)
   (field value key))
 

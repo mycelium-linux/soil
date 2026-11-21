@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculator — Soil</title>
+<style>
+body { margin: 0; }
+:root {
+  color-scheme: dark;
+  --ink: #e9ecf2;
+  --muted: #8b93a7;
+  --line: rgba(255,255,255,.08);
+  --panel: #141821;
+  --panel-2: #191f2b;
+  --accent: #c8f169;
+  --accent-ink: #18200a;
+  --danger: #ff9a9a;
+}
+* { box-sizing: border-box; }
+.app {
+  min-height: 100vh;
+  padding: 28px clamp(20px, 5vw, 64px) 64px;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 480px at 15% -10%, rgba(200,241,105,.10), transparent 60%),
+    radial-gradient(700px 420px at 95% 5%, rgba(110,140,255,.10), transparent 55%),
+    #0b0d12;
+  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { font-weight: 800; letter-spacing: .18em; font-size: 13px; }
+.brand-sub { margin-left: 10px; color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: lowercase; }
+.pill {
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 12px; color: var(--muted); font-size: 12px;
+  background: rgba(255,255,255,.03);
+}
+.stage { margin-top: clamp(32px, 6vh, 72px); max-width: 1080px; }
+.card {
+  border: 1px solid var(--line); border-radius: 20px;
+  padding: clamp(22px, 4vw, 38px);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), transparent 60%), var(--panel);
+  box-shadow: 0 24px 70px rgba(0,0,0,.38);
+}
+.card.soft { background: var(--panel-2); }
+.eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; letter-spacing: .22em; }
+.hint { margin: 14px 0 22px; color: var(--muted); max-width: 52ch; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.spread { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.btn {
+  appearance: none; border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 16px; min-width: 44px; cursor: pointer;
+  color: var(--ink); background: rgba(255,255,255,.045);
+  font: 600 14px/1.2 ui-sans-serif, system-ui, sans-serif;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, .input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { background: #d7ff7d; }
+.btn.ghost { color: var(--muted); }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.input {
+  flex: 1; min-width: 0; padding: 11px 14px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: #0d1016; color: var(--ink);
+  font: 15px/1.3 ui-sans-serif, system-ui, sans-serif;
+}
+.input::placeholder { color: #5d6578; }
+.stack { display: grid; gap: 12px; }
+.muted { color: var(--muted); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.code {
+  margin: 0 0 16px; padding: 14px 16px; overflow-x: auto;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: #0d1016; color: #d7e0f5;
+  font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+}
+.tok-comment { color: #6c7488; font-style: italic; }
+.tok-string { color: #a9d98d; }
+.tok-keyword { color: #8db4ff; }
+.tok-literal { color: #f5c451; }
+.tok-number { color: #f0a6ca; }
+.tok-special { color: #c8f169; font-weight: 700; }
+.tok-paren { color: #8a93a8; }
+.tok-fn { color: #eef1f7; }
+.tok-symbol { color: #d7e0f5; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+.calc-card { max-width: 420px; }
+.display {
+  display: block; margin: 18px 0 20px; padding: 18px 16px;
+  border: 1px solid var(--line); border-radius: 14px;
+  background: #0d1016; color: var(--ink);
+  font: 600 clamp(32px, 8vw, 52px)/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-align: right; letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.key {
+  padding: 16px 0; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(255,255,255,.045); color: var(--ink); cursor: pointer;
+  font: 600 18px/1 ui-sans-serif, system-ui, sans-serif;
+  transition: transform .08s ease, background .15s ease;
+}
+.key:hover { background: rgba(255,255,255,.09); }
+.key:active { transform: translateY(1px); }
+.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.key.fn { color: var(--muted); }
+.key.op { color: var(--accent); }
+.key.equals { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.key.zero { grid-column: span 4; }
+
+</style>
+</head>
+<body>
+<div class="app"><header class="topbar"><div class="brand">SOIL<span class="brand-sub">calculator</span></div><div class="pill">state machine</div></header><main class="stage"><section class="card calc-card"><p class="eyebrow">CALCULATOR</p><output class="display">0</output><div class="keys"><button class="key fn" data-op="clear" data-value="">C</button><button class="key fn" data-op="negate" data-value="">±</button><button class="key op" data-op="op" data-value="/">÷</button><button class="key op" data-op="op" data-value="*">×</button><button class="key" data-op="digit" data-value="7">7</button><button class="key" data-op="digit" data-value="8">8</button><button class="key" data-op="digit" data-value="9">9</button><button class="key op" data-op="op" data-value="-">−</button><button class="key" data-op="digit" data-value="4">4</button><button class="key" data-op="digit" data-value="5">5</button><button class="key" data-op="digit" data-value="6">6</button><button class="key op" data-op="op" data-value="+">+</button><button class="key" data-op="digit" data-value="1">1</button><button class="key" data-op="digit" data-value="2">2</button><button class="key" data-op="digit" data-value="3">3</button><button class="key equals" data-op="equals" data-value="">=</button><button class="key zero" data-op="digit" data-value="0">0</button></div></section></main></div>
+</body>
+</html>
+

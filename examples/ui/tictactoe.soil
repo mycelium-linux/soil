@@ -1,0 +1,132 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Tic-tac-toe: lists, indexing, immutable updates, and win detection.
+
+(defun board-state (board turn winner)
+  (list
+    (list :board board)
+    (list :turn turn)
+    (list :winner winner)))
+
+(defun initial-state ()
+  (board-state
+    (list nil nil nil nil nil nil nil nil nil)
+    "X"
+    nil))
+
+(defun line-win (board a b c player)
+  (and
+    (= (nth a board) player)
+    (= (nth b board) player)
+    (= (nth c board) player)))
+
+(defun winner (board)
+  (cond
+    ((line-win board 0 1 2 "X") "X")
+    ((line-win board 3 4 5 "X") "X")
+    ((line-win board 6 7 8 "X") "X")
+    ((line-win board 0 3 6 "X") "X")
+    ((line-win board 1 4 7 "X") "X")
+    ((line-win board 2 5 8 "X") "X")
+    ((line-win board 0 4 8 "X") "X")
+    ((line-win board 2 4 6 "X") "X")
+    ((line-win board 0 1 2 "O") "O")
+    ((line-win board 3 4 5 "O") "O")
+    ((line-win board 6 7 8 "O") "O")
+    ((line-win board 0 3 6 "O") "O")
+    ((line-win board 1 4 7 "O") "O")
+    ((line-win board 2 5 8 "O") "O")
+    ((line-win board 0 4 8 "O") "O")
+    ((line-win board 2 4 6 "O") "O")
+    (else nil)))
+
+(defun full? (board)
+  (all? 'filled? board))
+
+(defun filled? (value)
+  (not (nil? value)))
+
+(defun play (state index)
+  (let ((board (field state :board))
+        (turn (field state :turn))
+        (won (field state :winner)))
+    (if (or (not (nil? won)) (not (nil? (nth index board))))
+        state
+        (let ((next (list-set index turn board))
+              (win (winner next)))
+          (board-state next (if (= turn "X") "O" "X") win)))))
+
+(defun update (state action)
+  (let ((op (action-op action)))
+    (cond
+      ((= op "play")
+        (play state (json-decode (action-field action :index "0"))))
+      ((= op "reset") (initial-state))
+      (else state))))
+
+(defun cell (board won index)
+  (let ((mark (nth index board)))
+    (el "button"
+      (list
+        (attr :class (if (nil? mark) "cell" (str "cell " mark)))
+        (attr :data-key (str index))
+        (attr :data-op "play")
+        (attr :data-index (str index))
+        (attr :disabled (or (not (nil? mark)) (not (nil? won)))))
+      (list (txt (if (nil? mark) "" mark))))))
+
+(defun cells (board won index)
+  (if (>= index 9)
+      nil
+      (cons (cell board won index) (cells board won (+ index 1)))))
+
+(defun view (state)
+  (let ((board (field state :board))
+        (turn (field state :turn))
+        (won (field state :winner)))
+    (el "div" (list (attr :class "app"))
+      (list
+        (el "header" (list (attr :class "topbar"))
+          (list
+            (el "div" (list (attr :class "brand"))
+              (list
+                (txt "SOIL")
+                (el "span" (list (attr :class "brand-sub"))
+                  (list (txt "tic-tac-toe")))))
+            (el "div" (list (attr :class "pill"))
+              (list (txt (if (nil? won) "in progress" "finished"))))))
+        (el "main" (list (attr :class "stage"))
+          (list
+            (el "section" (list (attr :class "card ttt-card"))
+              (list
+                (el "p" (list (attr :class "eyebrow"))
+                  (list (txt "TIC-TAC-TOE")))
+                (el "p" (list (attr :class "status"))
+                  (list (txt
+                    (cond
+                      ((not (nil? won)) (str won " wins"))
+                      ((full? board) "Draw")
+                      (else (str turn " to move"))))))
+                (el "div" (list (attr :class "board"))
+                  (cells board won 0))
+                (el "div" (list (attr :class "row"))
+                  (list
+                    (el "button" (list (attr :class "btn ghost") (attr :data-op "reset"))
+                      (list (txt "New game")))))))))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".ttt-card { max-width: 460px; }\n"
+    ".status { margin: 14px 0 18px; font-size: 18px; font-weight: 600; }\n"
+    ".board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }\n"
+    ".cell {\n"
+    "  aspect-ratio: 1; border: 1px solid var(--line); border-radius: 14px;\n"
+    "  background: rgba(255,255,255,.035); color: var(--ink); cursor: pointer;\n"
+    "  font: 700 clamp(28px, 8vw, 48px)/1 ui-sans-serif, system-ui, sans-serif;\n"
+    "  transition: background .15s ease, border-color .15s ease;\n"
+    "}\n"
+    ".cell:hover:not(:disabled) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }\n"
+    ".cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }\n"
+    ".cell:disabled { cursor: default; }\n"
+    ".cell.X { color: var(--accent); }\n"
+    ".cell.O { color: #8db4ff; }\n"))

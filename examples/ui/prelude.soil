@@ -1,0 +1,104 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Shared UI prelude for the examples: action decoding and the base theme.
+;
+; The host loads this after stdlib/prelude.soil. Examples only define their
+; own state, update, view, and any additional CSS.
+
+(defun action-decode (action)
+  (if (string-contains? action "{")
+      (json-decode action)
+      (list (list :op action))))
+
+(defun action-op (action)
+  (field (action-decode action) :op))
+
+(defun action-field (action key fallback)
+  (let ((value (field (action-decode action) key)))
+    (if (nil? value) fallback value)))
+
+(defun base-styles ()
+  (str
+    ":root {\n"
+    "  color-scheme: dark;\n"
+    "  --ink: #e9ecf2;\n"
+    "  --muted: #8b93a7;\n"
+    "  --line: rgba(255,255,255,.08);\n"
+    "  --panel: #141821;\n"
+    "  --panel-2: #191f2b;\n"
+    "  --accent: #c8f169;\n"
+    "  --accent-ink: #18200a;\n"
+    "  --danger: #ff9a9a;\n"
+    "}\n"
+    "* { box-sizing: border-box; }\n"
+    ".app {\n"
+    "  min-height: 100vh;\n"
+    "  padding: 28px clamp(20px, 5vw, 64px) 64px;\n"
+    "  color: var(--ink);\n"
+    "  background:\n"
+    "    radial-gradient(900px 480px at 15% -10%, rgba(200,241,105,.10), transparent 60%),\n"
+    "    radial-gradient(700px 420px at 95% 5%, rgba(110,140,255,.10), transparent 55%),\n"
+    "    #0b0d12;\n"
+    "  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif;\n"
+    "}\n"
+    ".topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }\n"
+    ".brand { font-weight: 800; letter-spacing: .18em; font-size: 13px; }\n"
+    ".brand-sub { margin-left: 10px; color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: lowercase; }\n"
+    ".pill {\n"
+    "  border: 1px solid var(--line); border-radius: 999px;\n"
+    "  padding: 6px 12px; color: var(--muted); font-size: 12px;\n"
+    "  background: rgba(255,255,255,.03);\n"
+    "}\n"
+    ".stage { margin-top: clamp(32px, 6vh, 72px); max-width: 1080px; }\n"
+    ".card {\n"
+    "  border: 1px solid var(--line); border-radius: 20px;\n"
+    "  padding: clamp(22px, 4vw, 38px);\n"
+    "  background: linear-gradient(180deg, rgba(255,255,255,.035), transparent 60%), var(--panel);\n"
+    "  box-shadow: 0 24px 70px rgba(0,0,0,.38);\n"
+    "}\n"
+    ".card.soft { background: var(--panel-2); }\n"
+    ".eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; letter-spacing: .22em; }\n"
+    ".hint { margin: 14px 0 22px; color: var(--muted); max-width: 52ch; }\n"
+    ".row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }\n"
+    ".spread { display: flex; gap: 10px; align-items: center; justify-content: space-between; }\n"
+    ".btn {\n"
+    "  appearance: none; border: 1px solid var(--line); border-radius: 12px;\n"
+    "  padding: 10px 16px; min-width: 44px; cursor: pointer;\n"
+    "  color: var(--ink); background: rgba(255,255,255,.045);\n"
+    "  font: 600 14px/1.2 ui-sans-serif, system-ui, sans-serif;\n"
+    "  transition: transform .08s ease, background .15s ease, border-color .15s ease;\n"
+    "}\n"
+    ".btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }\n"
+    ".btn:active { transform: translateY(1px); }\n"
+    ".btn:focus-visible, .input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }\n"
+    ".btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n"
+    ".btn.primary:hover { background: #d7ff7d; }\n"
+    ".btn.ghost { color: var(--muted); }\n"
+    ".btn.danger { color: var(--danger); }\n"
+    ".btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }\n"
+    ".input {\n"
+    "  flex: 1; min-width: 0; padding: 11px 14px;\n"
+    "  border: 1px solid var(--line); border-radius: 12px;\n"
+    "  background: #0d1016; color: var(--ink);\n"
+    "  font: 15px/1.3 ui-sans-serif, system-ui, sans-serif;\n"
+    "}\n"
+    ".input::placeholder { color: #5d6578; }\n"
+    ".stack { display: grid; gap: 12px; }\n"
+    ".muted { color: var(--muted); }\n"
+    ".mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }\n"
+    ".code {\n"
+    "  margin: 0 0 16px; padding: 14px 16px; overflow-x: auto;\n"
+    "  border: 1px solid var(--line); border-radius: 12px;\n"
+    "  background: #0d1016; color: #d7e0f5;\n"
+    "  font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;\n"
+    "  white-space: pre-wrap;\n"
+    "}\n"
+    ".tok-comment { color: #6c7488; font-style: italic; }\n"
+    ".tok-string { color: #a9d98d; }\n"
+    ".tok-keyword { color: #8db4ff; }\n"
+    ".tok-literal { color: #f5c451; }\n"
+    ".tok-number { color: #f0a6ca; }\n"
+    ".tok-special { color: #c8f169; font-weight: 700; }\n"
+    ".tok-paren { color: #8a93a8; }\n"
+    ".tok-fn { color: #eef1f7; }\n"
+    ".tok-symbol { color: #d7e0f5; }\n"
+    "@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }\n"))

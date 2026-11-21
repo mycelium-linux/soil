@@ -1,0 +1,172 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; A small Soil tokenizer for HTML output.
+;
+; It returns UI form nodes (`el`/`txt`), so the same highlight tree renders in
+; SSR and in the browser host. The tokenizer is intentionally simple: comments,
+; strings, keywords, numbers, literals, special forms, parentheses, symbols,
+; and function names.
+
+(defun highlight-space? (character)
+  (or
+    (= character " ")
+    (= character "\n")
+    (= character "\r")
+    (= character "\t")))
+
+(defun highlight-newline? (character)
+  (= character "\n"))
+
+(defun highlight-not-newline? (character)
+  (not (highlight-newline? character)))
+
+(defun highlight-digit? (character)
+  (or
+    (= character "0")
+    (= character "1")
+    (= character "2")
+    (= character "3")
+    (= character "4")
+    (= character "5")
+    (= character "6")
+    (= character "7")
+    (= character "8")
+    (= character "9")))
+
+(defun highlight-symbol-char? (character)
+  (not
+    (or
+      (highlight-space? character)
+      (= character "(")
+      (= character ")")
+      (= character "\"")
+      (= character ";"))))
+
+(defun highlight-number-char? (character)
+  (or
+    (highlight-digit? character)
+    (= character ".")
+    (= character "-")))
+
+(defun highlight-number-start? (characters)
+  (let ((character (first characters)))
+    (or
+      (highlight-digit? character)
+      (and
+        (= character "-")
+        (not (nil? (rest characters)))
+        (highlight-digit? (first (rest characters)))))))
+
+(defun highlight-special? (text)
+  (or
+    (= text "defun")
+    (= text "defmacro")
+    (= text "defspore")
+    (= text "let")
+    (= text "if")
+    (= text "cond")
+    (= text "and")
+    (= text "or")
+    (= text "not")
+    (= text "quote")
+    (= text "lambda")
+    (= text "fn")
+    (= text "do")
+    (= text "begin")
+    (= text "match")))
+
+(defun highlight-literal? (text)
+  (or
+    (= text "#t")
+    (= text "#f")
+    (= text "nil")))
+
+(defun highlight-symbol-class (text previous)
+  (cond
+    ((highlight-special? text) "tok-special")
+    ((highlight-literal? text) "tok-literal")
+    ((= previous "(") "tok-fn")
+    (else "tok-symbol")))
+
+(defun highlight-string-into (characters reversed)
+  (if (nil? characters)
+      (reverse reversed)
+      (let ((character (first characters)))
+        (cond
+          ((= character "\\")
+            (if (nil? (rest characters))
+                (reverse (cons character reversed))
+                (highlight-string-into
+                  (rest (rest characters))
+                  (cons (first (rest characters)) (cons character reversed)))))
+          ((= character "\"")
+            (reverse (cons character reversed)))
+          (else
+            (highlight-string-into (rest characters) (cons character reversed)))))))
+
+(defun highlight-string-run (characters)
+  (highlight-string-into (rest characters) (list "\"")))
+
+(defun highlight-scan (characters previous)
+  (if (nil? characters)
+      nil
+      (let ((character (first characters)))
+        (cond
+          ((highlight-space? character)
+            (let ((run (take-while 'highlight-space? characters)))
+              (cons
+                (txt (string-join run ""))
+                (highlight-scan (drop-while 'highlight-space? characters) previous))))
+          ((= character ";")
+            (let ((run (take-while 'highlight-not-newline? characters)))
+              (cons
+                (el "span" (list (attr :class "tok-comment"))
+                  (list (txt (string-join run ""))))
+                (highlight-scan
+                  (drop-while 'highlight-not-newline? characters)
+                  (last-of run)))))
+          ((= character "\"")
+            (let ((run (highlight-string-run characters)))
+              (cons
+                (el "span" (list (attr :class "tok-string"))
+                  (list (txt (string-join run ""))))
+                (highlight-scan (drop (length run) characters) "\""))))
+          ((= character "(")
+            (cons
+              (el "span" (list (attr :class "tok-paren")) (list (txt "(")))
+              (highlight-scan (rest characters) "(")))
+          ((= character ")")
+            (cons
+              (el "span" (list (attr :class "tok-paren")) (list (txt ")")))
+              (highlight-scan (rest characters) ")")))
+          ((= character ":")
+            (let ((run (take-while 'highlight-symbol-char? characters)))
+              (cons
+                (el "span" (list (attr :class "tok-keyword"))
+                  (list (txt (string-join run ""))))
+                (highlight-scan
+                  (drop-while 'highlight-symbol-char? characters)
+                  (last-of run)))))
+          ((highlight-number-start? characters)
+            (let ((run (take-while 'highlight-number-char? characters)))
+              (cons
+                (el "span" (list (attr :class "tok-number"))
+                  (list (txt (string-join run ""))))
+                (highlight-scan
+                  (drop-while 'highlight-number-char? characters)
+                  (last-of run)))))
+          (else
+            (let ((run (take-while 'highlight-symbol-char? characters)))
+              (let ((text (string-join run "")))
+                (cons
+                  (el "span"
+                    (list (attr :class (highlight-symbol-class text previous)))
+                    (list (txt text)))
+                  (highlight-scan
+                    (drop-while 'highlight-symbol-char? characters)
+                    (last-of run))))))))))
+
+(defun highlight-soil (code)
+  (highlight-scan (string-chars (str code)) ""))
+
+(defun code-block (code)
+  (el "pre" (list (attr :class "code")) (highlight-soil code)))

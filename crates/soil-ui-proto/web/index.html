@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Soil UI prototype</title>
+  <title>Soil UI examples</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
@@ -38,6 +38,17 @@
       color: #8b93a7;
       font-weight: 700;
     }
+    .editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .editor select {
+      max-width: 55%;
+      padding: 6px 8px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 8px;
+      background: #141821;
+      color: #e9ecf2;
+      font: 11.5px/1.2 ui-sans-serif, system-ui, sans-serif;
+    }
+    .editor select:focus-visible { outline: 2px solid #c8f169; outline-offset: 2px; }
     .editor textarea {
       flex: 1;
       min-height: 0;
@@ -74,6 +85,9 @@
       overflow: auto;
     }
     #status.error { color: #ff9a9a; }
+    body.bare .shell { grid-template-columns: 1fr; }
+    body.bare .editor { display: none; }
+    body.bare #root { min-height: 100vh; }
     @media (max-width: 860px) {
       .shell { grid-template-columns: 1fr; }
       .editor { position: static; height: 55vh; border-left: 0; border-top: 1px solid rgba(255,255,255,.08); }
@@ -84,7 +98,10 @@
   <div class="shell">
     <div id="root"></div>
     <aside class="editor">
-      <h2>COUNTER.SOIL</h2>
+      <div class="editor-head">
+        <h2 id="filename">counter.soil</h2>
+        <select id="examples" aria-label="Example"></select>
+      </div>
       <textarea id="source" spellcheck="false" autocomplete="off"></textarea>
       <div class="editor-row">
         <button id="apply" type="button">Apply</button>

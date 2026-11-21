@@ -11,3 +11,14 @@
 
 (defun test/any ()
   (any? (quote over-two?) (list 1 2 3)))
+
+(defun under-three? (n) (< n 3))
+
+(defun test/take-while ()
+  (= (take-while 'under-three? (list 1 2 3 1)) (list 1 2)))
+
+(defun test/drop-while ()
+  (= (drop-while 'under-three? (list 1 2 3 1)) (list 3 1)))
+
+(defun test/last-of ()
+  (= (last-of (list 1 2 3)) 3))

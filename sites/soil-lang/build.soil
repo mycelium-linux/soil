@@ -1,0 +1,9 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Static build entry point. Run through sites/soil-lang/build.sh.
+
+(defun main ()
+  (println
+    (render-page
+      "Soil — a substrate for tools that explain themselves"
+      (styles)
+      (view #f))))

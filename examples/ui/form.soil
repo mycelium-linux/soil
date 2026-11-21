@@ -1,0 +1,101 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Form: named inputs, validation, and a success state.
+
+(defun form-state (name email error sent)
+  (list
+    (list :name name)
+    (list :email email)
+    (list :error error)
+    (list :sent sent)))
+
+(defun initial-state ()
+  (form-state "" "" nil #f))
+
+(defun update (state action)
+  (let ((op (action-op action)))
+    (cond
+      ((= op "submit")
+        (let ((name (action-field action :name ""))
+              (email (action-field action :email "")))
+          (cond
+            ((= (length name) 0)
+              (form-state name email "Name is required." #f))
+            ((not (string-contains? email "@"))
+              (form-state name email "Email needs an @." #f))
+            (else
+              (form-state name email nil #t)))))
+      ((= op "again") (initial-state))
+      (else state))))
+
+(defun field-row (label name placeholder)
+  (el "label" (list (attr :class "field"))
+    (list
+      (el "span" (list (attr :class "field-label")) (list (txt label)))
+      (el "input"
+        (list
+          (attr :class "input")
+          (attr :name name)
+          (attr :placeholder placeholder)
+          (attr :autocomplete "off"))
+        nil))))
+
+(defun form-view (state)
+  (el "section" (list (attr :class "card form-card"))
+    (list
+      (el "p" (list (attr :class "eyebrow"))
+        (list (txt "FORM")))
+      (el "h2" (list (attr :class "title"))
+        (list (txt "Join the soil")))
+      (el "p" (list (attr :class "hint"))
+        (list (txt "The inputs are plain HTML. The values arrive in Lisp as an action payload.")))
+      (if (nil? (field state :error))
+          nil
+          (el "p" (list (attr :class "error"))
+            (list (txt (field state :error)))))
+      (el "form" (list (attr :class "stack") (attr :data-op "submit"))
+        (list
+          (field-row "Name" "name" "Ada Lovelace")
+          (field-row "Email" "email" "ada@example.com")
+          (el "button" (list (attr :class "btn primary") (attr :type "submit"))
+            (list (txt "Submit"))))))))
+
+(defun success-view (state)
+  (el "section" (list (attr :class "card form-card"))
+    (list
+      (el "p" (list (attr :class "eyebrow"))
+        (list (txt "FORM")))
+      (el "h2" (list (attr :class "title"))
+        (list (txt (str "Thanks, " (field state :name)))))
+      (el "p" (list (attr :class "hint"))
+        (list (txt (str "We would write to " (field state :email) " if this form had a host."))))
+      (el "button" (list (attr :class "btn ghost") (attr :data-op "again"))
+        (list (txt "Submit another"))))))
+
+(defun view (state)
+  (el "div" (list (attr :class "app"))
+    (list
+      (el "header" (list (attr :class "topbar"))
+        (list
+          (el "div" (list (attr :class "brand"))
+            (list
+              (txt "SOIL")
+              (el "span" (list (attr :class "brand-sub"))
+                (list (txt "form")))))
+          (el "div" (list (attr :class "pill"))
+            (list (txt (if (field state :sent) "sent" "draft"))))))
+      (el "main" (list (attr :class "stage"))
+        (list
+          (if (field state :sent)
+              (success-view state)
+              (form-view state)))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".form-card { max-width: 520px; }\n"
+    ".title { margin: 0 0 10px; font-size: 24px; letter-spacing: -.02em; }\n"
+    ".field { display: grid; gap: 6px; }\n"
+    ".field-label { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }\n"
+    ".form-card form { margin-top: 18px; }\n"
+    ".form-card .btn { justify-self: start; margin-top: 4px; }\n"
+    ".error { margin: 0 0 14px; padding: 10px 12px; border: 1px solid rgba(255,120,120,.35); border-radius: 10px; color: var(--danger); background: rgba(255,120,120,.07); }\n"))

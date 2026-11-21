@@ -1,0 +1,78 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Tabs: a tiny state machine, conditional rendering, and active styling.
+
+(defun tab-state (active)
+  (list (list :active active)))
+
+(defun initial-state ()
+  (tab-state "overview"))
+
+(defun update (state action)
+  (let ((op (action-op action)))
+    (cond
+      ((= op "tab") (tab-state (action-field action :tab "overview")))
+      (else state))))
+
+(defun tab-button (active id label)
+  (el "button"
+    (list
+      (attr :class (if (= active id) "tab active" "tab"))
+      (attr :data-op "tab")
+      (attr :data-tab id))
+    (list (txt label))))
+
+(defun panel (active id title body)
+  (if (= active id)
+      (el "section" (list (attr :class "panel"))
+        (list
+          (el "h2" nil (list (txt title)))
+          (el "p" nil (list (txt body)))))
+      nil))
+
+(defun view (state)
+  (let ((active (field state :active)))
+    (el "div" (list (attr :class "app"))
+      (list
+        (el "header" (list (attr :class "topbar"))
+          (list
+            (el "div" (list (attr :class "brand"))
+              (list
+                (txt "SOIL")
+                (el "span" (list (attr :class "brand-sub"))
+                  (list (txt "tabs")))))
+            (el "div" (list (attr :class "pill"))
+              (list (txt active)))))
+        (el "main" (list (attr :class "stage"))
+          (list
+            (el "section" (list (attr :class "card"))
+              (list
+                (el "p" (list (attr :class "eyebrow"))
+                  (list (txt "TABS")))
+                (el "div" (list (attr :class "tabs"))
+                  (list
+                    (tab-button active "overview" "Overview")
+                    (tab-button active "activity" "Activity")
+                    (tab-button active "settings" "Settings")))
+                (panel active "overview" "Overview"
+                  "One state value selects a panel. The active tab is just a string.")
+                (panel active "activity" "Activity"
+                  "The same view function renders a different subtree without a router.")
+                (panel active "settings" "Settings"
+                  "Switch tabs in the source panel and press Apply to see the state reset.")
+              ))))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".tabs { display: flex; gap: 6px; margin: 20px 0; padding: 5px; border: 1px solid var(--line); border-radius: 12px; width: fit-content; }\n"
+    ".tab {\n"
+    "  appearance: none; border: 0; border-radius: 8px; padding: 8px 14px;\n"
+    "  background: transparent; color: var(--muted); cursor: pointer;\n"
+    "  font: 600 13px/1.2 ui-sans-serif, system-ui, sans-serif;\n"
+    "}\n"
+    ".tab:hover { color: var(--ink); background: rgba(255,255,255,.05); }\n"
+    ".tab.active { color: var(--accent-ink); background: var(--accent); }\n"
+    ".tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }\n"
+    ".panel { min-height: 150px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }\n"
+    ".panel h2 { margin: 0 0 8px; font-size: 20px; }\n"
+    ".panel p { margin: 0; color: var(--muted); max-width: 56ch; }\n"))

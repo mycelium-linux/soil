@@ -1,0 +1,154 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; TODO: forms, keyed lists, action payloads, and derived counts.
+
+(defun item (id text done)
+  (list
+    (list :id id)
+    (list :text text)
+    (list :done done)))
+
+(defun todo-state (next items)
+  (list
+    (list :next next)
+    (list :items items)))
+
+(defun initial-state ()
+  (todo-state 4
+    (list
+      (item 1 "Read the Soil roadmap" #f)
+      (item 2 "Build the TODO app" #t)
+      (item 3 "Make every example live-editable" #f))))
+
+(defun toggle-item (item id)
+  (if (= (str (field item :id)) id)
+      (item (field item :id) (field item :text) (not (field item :done)))
+      item))
+
+(defun keep-item (item id)
+  (not (= (str (field item :id)) id)))
+
+(defun not-done? (item)
+  (not (field item :done)))
+
+(defun update (state action)
+  (let ((op (action-op action))
+        (items (field state :items)))
+    (cond
+      ((= op "add")
+        (let ((text (action-field action :text "")))
+          (if (= (length text) 0)
+              state
+              (let ((id (field state :next)))
+                (todo-state (+ id 1)
+                  (append items (list (item id text #f))))))))
+      ((= op "toggle")
+        (todo-state (field state :next)
+          (map-with 'toggle-item (action-field action :id "") items)))
+      ((= op "delete")
+        (todo-state (field state :next)
+          (filter-with 'keep-item (action-field action :id "") items)))
+      ((= op "clear")
+        (todo-state (field state :next)
+          (filter 'not-done? items)))
+      (else state))))
+
+(defun view-item (item)
+  (let ((id (str (field item :id)))
+        (done (field item :done)))
+    (el "li" (list (attr :class "todo-item") (attr :data-key id))
+      (list
+        (el "button"
+          (list
+            (attr :class (if done "toggle done" "toggle"))
+            (attr :data-op "toggle")
+            (attr :data-id id)
+            (attr :title (if done "Mark active" "Mark done")))
+          (list (txt (if done "✓" "○"))))
+        (el "span" (list (attr :class (if done "todo-text done" "todo-text")))
+          (list (txt (field item :text))))
+        (el "button"
+          (list
+            (attr :class "icon-btn danger")
+            (attr :data-op "delete")
+            (attr :data-id id)
+            (attr :title "Delete"))
+          (list (txt "×")))))))
+
+(defun view (state)
+  (let ((items (field state :items))
+        (remaining (length (filter 'not-done? (field state :items))))
+        (done-count (- (length (field state :items))
+                       (length (filter 'not-done? (field state :items))))))
+    (el "div" (list (attr :class "app"))
+      (list
+        (el "header" (list (attr :class "topbar"))
+          (list
+            (el "div" (list (attr :class "brand"))
+              (list
+                (txt "SOIL")
+                (el "span" (list (attr :class "brand-sub"))
+                  (list (txt "todo")))))
+            (el "div" (list (attr :class "pill"))
+              (list (txt (str remaining " left"))))))
+        (el "main" (list (attr :class "stage"))
+          (list
+            (el "section" (list (attr :class "card todo-card"))
+              (list
+                (el "p" (list (attr :class "eyebrow"))
+                  (list (txt "TODO")))
+                (el "form" (list (attr :class "row add-row") (attr :data-op "add"))
+                  (list
+                    (el "input"
+                      (list
+                        (attr :class "input")
+                        (attr :name "text")
+                        (attr :placeholder "What needs doing?")
+                        (attr :autocomplete "off"))
+                      nil)
+                    (el "button" (list (attr :class "btn primary") (attr :type "submit"))
+                      (list (txt "Add")))))
+                (if (nil? items)
+                    (el "p" (list (attr :class "empty"))
+                      (list (txt "Nothing here yet. Add something above.")))
+                    (el "ul" (list (attr :class "todo-list"))
+                      (map 'view-item items)))
+                (el "footer" (list (attr :class "todo-footer"))
+                  (list
+                    (el "span" (list (attr :class "muted"))
+                      (list (txt (str remaining " remaining · " done-count " done"))))
+                    (el "button"
+                      (list
+                        (attr :class "btn ghost")
+                        (attr :data-op "clear")
+                        (attr :disabled (= done-count 0)))
+                      (list (txt "Clear completed")))))))))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".todo-card { max-width: 720px; }\n"
+    ".add-row { margin: 20px 0 22px; }\n"
+    ".todo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }\n"
+    ".todo-item {\n"
+    "  display: flex; align-items: center; gap: 10px;\n"
+    "  padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;\n"
+    "  background: rgba(255,255,255,.025);\n"
+    "}\n"
+    ".todo-item:hover { border-color: rgba(255,255,255,.16); }\n"
+    ".toggle {\n"
+    "  width: 28px; height: 28px; flex: none; border-radius: 50%;\n"
+    "  border: 1px solid var(--line); background: transparent; color: var(--muted);\n"
+    "  cursor: pointer; font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;\n"
+    "}\n"
+    ".toggle.done { color: var(--accent); border-color: rgba(200,241,105,.5); background: rgba(200,241,105,.08); }\n"
+    ".todo-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }\n"
+    ".todo-text.done { color: var(--muted); text-decoration: line-through; }\n"
+    ".icon-btn {\n"
+    "  flex: none; width: 30px; height: 30px; border-radius: 9px;\n"
+    "  border: 1px solid transparent; background: transparent; color: var(--muted);\n"
+    "  cursor: pointer; font: 20px/1 ui-sans-serif, system-ui, sans-serif;\n"
+    "}\n"
+    ".icon-btn:hover { border-color: var(--line); background: rgba(255,255,255,.05); }\n"
+    ".icon-btn.danger:hover { color: var(--danger); }\n"
+    ".todo-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }\n"
+    ".empty { margin: 18px 0; padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; }\n"))

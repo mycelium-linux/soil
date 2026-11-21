@@ -1,0 +1,51 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; Counter: the smallest complete UI.
+;
+; Exercises state, actions, and CSS. No list, no form, no payload.
+
+(defun initial-state ()
+  0)
+
+(defun update (state action)
+  (let ((op (action-op action)))
+    (cond
+      ((= op "inc") (+ state 1))
+      ((= op "dec") (- state 1))
+      ((= op "reset") 0)
+      (else state))))
+
+(defun view (state)
+  (el "div" (list (attr :class "app"))
+    (list
+      (el "header" (list (attr :class "topbar"))
+        (list
+          (el "div" (list (attr :class "brand"))
+            (list
+              (txt "SOIL")
+              (el "span" (list (attr :class "brand-sub"))
+                (list (txt "counter")))))
+          (el "div" (list (attr :class "pill"))
+            (list (txt "lisp → html/css")))))
+      (el "main" (list (attr :class "stage"))
+        (list
+          (el "section" (list (attr :class "card"))
+            (list
+              (el "p" (list (attr :class "eyebrow"))
+                (list (txt "COUNTER")))
+              (el "output" (list (attr :class "value"))
+                (list (txt state)))
+              (el "p" (list (attr :class "hint"))
+                (list (txt "The form comes from Lisp. The host only reconciles DOM nodes and sends actions back.")))
+              (el "div" (list (attr :class "row"))
+                (list
+                  (el "button" (list (attr :class "btn") (attr :data-op "dec"))
+                    (list (txt "−")))
+                  (el "button" (list (attr :class "btn ghost") (attr :data-op "reset"))
+                    (list (txt "Reset")))
+                  (el "button" (list (attr :class "btn primary") (attr :data-op "inc"))
+                    (list (txt "+"))))))))))))
+
+(defun styles ()
+  (str
+    (base-styles)
+    ".value { display: block; font: 700 clamp(64px, 12vw, 128px)/.9 ui-sans-serif, system-ui, sans-serif; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }\n"))

@@ -1,0 +1,372 @@
+; SPDX-License-Identifier: MIT OR Apache-2.0
+; The soil-lang.org landing page.
+;
+; This is a static page with no actions. It uses only the four-function UI
+; contract, so the same file renders in the browser host and can be exported
+; to plain HTML later.
+
+(defun initial-state ()
+  #f)
+
+(defun update (state action)
+  state)
+
+(defun a (href class children)
+  (el "a" (list (attr :href href) (attr :class class)) children))
+
+(defun manifesto-item (number title body)
+  (el "li" nil
+    (list
+      (el "span" (list (attr :class "manifesto-number")) (list (txt number)))
+      (el "div" nil
+        (list
+          (el "h3" nil (list (txt title)))
+          (el "p" nil (list (txt body))))))))
+
+(defun step (number title body)
+  (el "li" nil
+    (list
+      (el "span" (list (attr :class "step-number")) (list (txt number)))
+      (el "div" nil
+        (list
+          (el "strong" nil (list (txt title)))
+          (el "p" nil (list (txt body))))))))
+
+(defun carousel-dot (slug title active)
+  (el "button"
+    (list
+      (attr :class (if active "carousel-dot active" "carousel-dot"))
+      (attr :data-carousel-slug slug)
+      (attr :data-carousel-title title)
+      (attr :title title))
+    (list (txt title))))
+
+(defun example-preview (slug title)
+  (el "figure"
+    (list
+      (attr :class "example")
+      (attr :data-soil-component slug))
+    (list
+      (el "iframe"
+        (list
+          (attr :src (str "examples/" slug ".html"))
+          (attr :title title)
+          (attr :scrolling "no"))
+        nil)
+      (el "figcaption" nil (list (txt title))))))
+
+(defun view (state)
+  (el "div" (list (attr :class "site"))
+    (list
+      (el "header" (list (attr :class "nav"))
+        (list
+          (el "div" (list (attr :class "nav-inner"))
+            (list
+              (a "/" "logo"
+                (list
+                  (el "span" (list (attr :class "logo-mark")) (list (txt "S")))
+                  (el "span" (list (attr :class "logo-word")) (list (txt "Soil")))))
+              (el "nav" (list (attr :class "nav-links"))
+                (list
+                  (a "#why" "" (list (txt "Why Soil")))
+                  (a "#substrate" "" (list (txt "Substrate")))
+                  (a "#learn" "" (list (txt "Learn")))
+                  (a "#examples" "" (list (txt "Examples")))
+                  (a "#spores" "" (list (txt "Spores")))
+                  (a "#community" "" (list (txt "Community")))))
+              (a "https://github.com/mycelium-linux/soil" "nav-cta" (list (txt "GitHub")))))))
+      (el "main" nil
+        (list
+          (el "section" (list (attr :class "hero"))
+            (list
+              (el "div" (list (attr :class "hero-copy"))
+                (list
+                  (el "p" (list (attr :class "kicker")) (list (txt "SOIL-LANG.ORG")))
+                  (el "h1" nil
+                    (list
+                      (txt "A substrate for tools that ")
+                      (el "span" (list (attr :class "accent")) (list (txt "explain themselves.")))))
+                  (el "p" (list (attr :class "lede"))
+                    (list (txt "Soil is a small homoiconic Lisp with WIT capabilities. It keeps the Lisp bargain — code as data, macros, a live system — and adds typed host interfaces, GPU-resident views, and spores that travel.")))
+                  (el "div" (list (attr :class "actions"))
+                    (list
+                      (a "#learn" "btn primary" (list (txt "Get started")))
+                      (a "https://github.com/mycelium-linux/soil" "btn" (list (txt "View on GitHub")))))
+                  (el "p" (list (attr :class "meta"))
+                    (list
+                      (txt "In the Lisp family. ")
+                      (a "https://lisp-lang.org/" "" (list (txt "lisp-lang.org")))
+                      (txt " · MIT OR Apache-2.0 · Rust core · native and WASM hosts")))))
+              (el "div" (list (attr :class "hero-code"))
+                (list
+                  (el "div" (list (attr :class "code-head"))
+                    (list
+                      (el "span" (list (attr :class "dot")) nil) 
+                      (el "span" (list (attr :class "dot")) nil) 
+                      (el "span" (list (attr :class "dot")) nil) 
+                      (el "span" (list (attr :class "code-name")) (list (txt "counter.soil")))))
+                  (code-block "(defun view (state)\n  (el \"div\" (list (attr :class \"app\"))\n    (list\n      (el \"output\" (list (attr :class \"value\"))\n        (list (txt state)))\n      (el \"button\" (list (attr :data-op \"inc\"))\n        (list (txt \"+\"))))))")
+                  (el "div" (list (attr :class "code-foot"))
+                    (list (txt "→ real HTML and CSS. No virtual DOM required.")))))))
+          (el "section" (list (attr :class "section") (attr :id "why"))
+            (list
+              (el "div" (list (attr :class "editorial"))
+                (list
+                  (el "div" (list (attr :class "editorial-copy"))
+                    (list
+                      (el "p" (list (attr :class "kicker")) (list (txt "WHY SOIL")))
+                      (el "h2" nil (list (txt "Small core. Sharp edges. No hidden layers.")))
+                      (el "p" (list (attr :class "body"))
+                        (list (txt "The substrate is deliberately thin. The interesting decisions live in the forms and the host boundary, not in a framework between them.")))))
+                  (el "ol" (list (attr :class "manifesto"))
+                    (list
+                      (manifesto-item "01" "Homoiconic"
+                        "The source, the AST, the docs, and the UI are the same tree. A tool can read and rewrite itself without a second representation.")
+                      (manifesto-item "02" "Editable"
+                        "Every form carries a source span. An agent can replace one form and keep the comments, layout, and everything it did not touch.")
+                      (manifesto-item "03" "Portable"
+                        "One WIT contract, two hosts. The same Lisp runs natively and in the browser; the GPU stays an optional capability, not a requirement.")))))))
+          (el "section" (list (attr :class "section") (attr :id "substrate"))
+            (list
+              (el "div" (list (attr :class "editorial reverse"))
+                (list
+                  (el "ol" (list (attr :class "manifesto"))
+                    (list
+                      (manifesto-item "01" "Lisp, kept intact"
+                        "Homoiconic forms, macros, a small core, and a REPL-shaped workflow. The source, the docs, and the UI do not fork into separate representations.")
+                      (manifesto-item "02" "GPU when it matters"
+                        "Canvas and GPU-resident scenes are a host capability. Trees, forms, and docs stay ordinary HTML/CSS; waveforms and schematics stay on the GPU.")
+                      (manifesto-item "03" "Boundaries and distance"
+                        "WIT makes capabilities typed and portable. Spores are content-addressed, so the same artifact can run on this machine or another host.")))
+                  (el "div" (list (attr :class "editorial-copy"))
+                    (list
+                      (el "p" (list (attr :class "kicker")) (list (txt "LISP, EXTENDED")))
+                      (el "h2" nil (list (txt "The Lisp bargain, with a modern substrate.")))
+                      (el "p" (list (attr :class "body"))
+                        (list (txt "Lisp gave us code as data, macros, and a live system. Soil keeps that bargain and adds a typed capability boundary, GPU-resident views, and spores that travel between machines.")))))))))
+          (el "section" (list (attr :class "section split") (attr :id "learn"))
+            (list
+              (el "div" nil
+                (list
+                  (el "p" (list (attr :class "kicker")) (list (txt "LEARN")))
+                  (el "h2" nil (list (txt "From a form to a running tool.")))
+                  (el "p" (list (attr :class "body"))
+                    (list (txt "Start with the language, then the host, then a spore. You do not need a framework to put a real interface on screen.")))
+                  (el "ol" (list (attr :class "steps"))
+                    (list
+                      (step "01" "Read the roadmap" "Phases from the core language to self-hosting, with done criteria.")
+                      (step "02" "Run an example" "Counter, TODO, calculator, tic-tac-toe. All of them are plain .soil.")
+                      (step "03" "Write a spore" "One manifest and one entry form. A library and an app are the same artifact.")))))
+              (el "pre" (list (attr :class "code block"))
+                (highlight-soil ";; tend build\n;; tend run\n\n(defun view (state)\n  (el \"main\" (list (attr :class \"app\"))\n    (list\n      (el \"h1\" nil (list (txt \"Hello from Soil\")))\n      (el \"p\" nil (list (txt \"This is a form, not a template.\"))))))"))))
+          (el "section" (list (attr :class "section") (attr :id "examples"))
+            (list
+              (el "p" (list (attr :class "kicker")) (list (txt "EXAMPLES")))
+              (el "h2" nil (list (txt "Six tools, inline.")))
+              (el "p" (list (attr :class "body"))
+                (list (txt "The carousel is one live Soil component at a time. The grid below is all six, mounted inline. No iframes, no separate app shell.")))
+              (el "div" (list (attr :class "carousel"))
+                (list
+                  (el "div" (list (attr :class "carousel-stage"))
+                    (list
+                      (el "figure"
+                        (list (attr :class "carousel-frame") (attr :data-soil-carousel "todo"))
+                        (list
+                          (el "iframe"
+                            (list
+                              (attr :src "examples/todo.html")
+                              (attr :title "TODO")
+                              (attr :scrolling "no"))
+                            nil)
+                          (el "figcaption" nil (list (txt "TODO")))))))
+                  (el "div" (list (attr :class "carousel-controls"))
+                    (list
+                      (el "button" (list (attr :class "btn ghost") (attr :data-carousel "prev"))
+                        (list (txt "←")))
+                      (el "div" (list (attr :class "carousel-dots"))
+                        (list
+                          (carousel-dot "todo" "TODO" #t)
+                          (carousel-dot "counter" "Counter" #f)
+                          (carousel-dot "calculator" "Calculator" #f)
+                          (carousel-dot "tictactoe" "Tic-tac-toe" #f)
+                          (carousel-dot "tabs" "Tabs" #f)
+                          (carousel-dot "form" "Form" #f)))
+                      (el "button" (list (attr :class "btn ghost") (attr :data-carousel "next"))
+                        (list (txt "→")))))))
+              (el "div" (list (attr :class "workbench"))
+                (list
+                  (example-preview "todo" "TODO")
+                  (example-preview "counter" "Counter")
+                  (example-preview "calculator" "Calculator")
+                  (example-preview "tictactoe" "Tic-tac-toe")
+                  (example-preview "tabs" "Tabs")
+                  (example-preview "form" "Form")))))
+          (el "section" (list (attr :class "section") (attr :id "spores"))
+            (list
+              (el "p" (list (attr :class "kicker")) (list (txt "SPORES")))
+              (el "h2" nil (list (txt "Libraries and apps are the same artifact.")))
+              (el "div" (list (attr :class "grid two"))
+                (list
+                  (el "article" (list (attr :class "card"))
+                    (list
+                      (el "h3" nil (list (txt "Load it for its functions")))
+                      (el "p" nil (list (txt "A spore that exports forms is a library. Require it, call its functions, compose its views.")))))
+                  (el "article" (list (attr :class "card"))
+                    (list
+                      (el "h3" nil (list (txt "Launch it for its entry point")))
+                      (el "p" nil (list (txt "The same spore with a start form is an app. tend resolves it, builds it, and runs it here or on another host.")))))))))
+          (el "section" (list (attr :class "community") (attr :id "community"))
+            (list
+              (el "div" nil
+                (list
+                  (el "p" (list (attr :class "kicker")) (list (txt "COMMUNITY")))
+                  (el "h2" nil (list (txt "Grow it with us.")))
+                  (el "p" (list (attr :class "body"))
+                    (list (txt "Soil is free software. The core is small on purpose. Bring a spore, a capability, or a hard question about what a tool should be able to explain.")))))
+              (el "div" (list (attr :class "actions"))
+                (list
+                  (a "https://github.com/mycelium-linux/soil" "btn primary" (list (txt "GitHub")))
+                  (a "https://github.com/mycelium-linux/soil/issues" "btn" (list (txt "Issues")))))))))
+      (el "footer" (list (attr :class "footer"))
+        (list
+          (el "div" nil (list (txt "Soil · soil-lang.org")))
+          (el "div" (list (attr :class "footer-links"))
+            (list
+              (a "#why" "" (list (txt "Why")))
+              (a "#learn" "" (list (txt "Learn")))
+              (a "#community" "" (list (txt "Community")))))
+          (el "div" nil (list (txt "MIT OR Apache-2.0"))))))))
+
+(defun styles ()
+  (str
+    ":root {\n"
+    "  color-scheme: dark;\n"
+    "  --ink: #eef1f7;\n"
+    "  --muted: #9aa2b5;\n"
+    "  --dim: #6c7488;\n"
+    "  --line: rgba(255,255,255,.09);\n"
+    "  --panel: #121620;\n"
+    "  --panel-2: #171c28;\n"
+    "  --accent: #c8f169;\n"
+    "  --accent-2: #8db4ff;\n"
+    "  --accent-ink: #18200a;\n"
+    "}\n"
+    "* { box-sizing: border-box; }\n"
+    ".site {\n"
+    "  min-height: 100vh;\n"
+    "  color: var(--ink);\n"
+    "  background:\n"
+    "    radial-gradient(1100px 600px at 12% -10%, rgba(200,241,105,.13), transparent 60%),\n"
+    "    radial-gradient(900px 520px at 92% 4%, rgba(110,140,255,.14), transparent 58%),\n"
+    "    #090b10;\n"
+    "  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif;\n"
+    "}\n"
+    ".nav {\n"
+    "  position: sticky; top: 0; z-index: 10;\n"
+    "  border-bottom: 1px solid var(--line);\n"
+    "  background: rgba(9,11,16,.78);\n"
+    "  backdrop-filter: blur(14px);\n"
+    "}\n"
+    ".nav-inner { max-width: 1180px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; gap: 28px; }\n"
+    ".logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 800; letter-spacing: .02em; }\n"
+    ".logo-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-weight: 900; }\n"
+    ".logo-word { font-size: 18px; letter-spacing: -.02em; }\n"
+    ".nav-links { display: flex; flex-wrap: wrap; gap: 22px; margin-left: 8px; flex: 1; }\n"
+    ".nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }\n"
+    ".nav-links a:hover { color: var(--ink); }\n"
+    ".nav-cta { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 700; }\n"
+    ".nav-cta:hover { border-color: rgba(200,241,105,.55); color: var(--accent); }\n"
+    "main { max-width: 1180px; margin: 0 auto; padding: 0 28px 40px; }\n"
+    ".hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 56px; align-items: center; padding: clamp(56px, 9vw, 112px) 0 clamp(48px, 7vw, 88px); }\n"
+    ".kicker { margin: 0 0 14px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .24em; }\n"
+    "h1 { margin: 0 0 22px; font-size: clamp(42px, 6.2vw, 76px); line-height: .98; letter-spacing: -.05em; font-weight: 800; }\n"
+    ".accent { color: var(--accent); }\n"
+    ".lede { margin: 0 0 28px; max-width: 58ch; color: var(--muted); font-size: clamp(17px, 1.8vw, 20px); }\n"
+    ".actions { display: flex; flex-wrap: wrap; gap: 10px; }\n"
+    ".btn { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 700; background: rgba(255,255,255,.035); }\n"
+    ".btn:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.07); }\n"
+    ".btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n"
+    ".btn.primary:hover { background: #d7ff7d; }\n"
+    ".meta { margin: 18px 0 0; color: var(--dim); font-size: 12.5px; }\n"
+    ".meta a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }\n"
+    ".meta a:hover { color: var(--ink); }\n"
+    ".hero-code { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.45); }\n"
+    ".code-head { display: flex; align-items: center; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.02); }\n"
+    ".dot { width: 9px; height: 9px; border-radius: 50%; background: #3a4254; }\n"
+    ".dot:nth-child(1) { background: #ff6f6f; }\n"
+    ".dot:nth-child(2) { background: #f5c451; }\n"
+    ".dot:nth-child(3) { background: #77d38a; }\n"
+    ".code-name { margin-left: 8px; color: var(--dim); font: 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }\n"
+    ".code { margin: 0; padding: 18px 18px 16px; overflow-x: auto; color: #d7e0f5; font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }\n"
+    ".code.block { border: 1px solid var(--line); border-radius: 16px; background: #0d1016; }\n"
+    ".code-foot { padding: 11px 14px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12px; background: rgba(255,255,255,.02); }\n"
+    ".tok-comment { color: #6c7488; font-style: italic; }\n"
+    ".tok-string { color: #a9d98d; }\n"
+    ".tok-keyword { color: #8db4ff; }\n"
+    ".tok-literal { color: #f5c451; }\n"
+    ".tok-number { color: #f0a6ca; }\n"
+    ".tok-special { color: #c8f169; font-weight: 700; }\n"
+    ".tok-paren { color: #8a93a8; }\n"
+    ".tok-fn { color: #eef1f7; }\n"
+    ".tok-symbol { color: #d7e0f5; }\n"
+    ".section { padding: clamp(52px, 7vw, 88px) 0; border-top: 1px solid var(--line); }\n"
+    ".section h2 { margin: 0 0 34px; max-width: 22ch; font-size: clamp(30px, 4vw, 48px); line-height: 1.05; letter-spacing: -.04em; }\n"
+    ".grid { display: grid; gap: 16px; }\n"
+    ".grid.two { grid-template-columns: repeat(2, 1fr); }\n"
+    ".editorial { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 56px; align-items: start; }\n"
+    ".editorial.reverse { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }\n"
+    ".editorial-copy { position: sticky; top: 92px; }\n"
+    ".editorial-copy h2 { margin-bottom: 18px; }\n"
+    ".editorial-copy .body { margin: 0; }\n"
+    ".manifesto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }\n"
+    ".manifesto li { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--line); }\n"
+    ".manifesto-number { color: var(--accent); font: 700 11px/1.8 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }\n"
+    ".manifesto h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.01em; }\n"
+    ".manifesto p { margin: 0; max-width: 52ch; color: var(--muted); }\n"
+    ".card { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.035), transparent 58%), var(--panel); }\n"
+    ".card h3 { margin: 0 0 10px; font-size: 18px; letter-spacing: -.01em; }\n"
+    ".card p { margin: 0; color: var(--muted); }\n"
+    ".workbench { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 340px; gap: 12px; margin-top: 32px; }\n"
+    ".example { position: relative; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #0d1016; }\n"
+    
+    ".example iframe { position: absolute; top: 0; left: 0; width: 200%; height: 200%; border: 0; transform: scale(.5); transform-origin: top left; }\n"
+    ".example figcaption { position: absolute; left: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 6px; background: rgba(9,11,16,.78); color: var(--muted); font: 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; backdrop-filter: blur(6px); pointer-events: none; }\n"
+    ".component-live { position: absolute; inset: 0; overflow: auto; }\n"
+    ".carousel { margin: 28px 0 40px; }\n"
+    ".carousel-stage { position: relative; height: 440px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.38); }\n"
+    ".carousel-frame { position: absolute; inset: 0; margin: 0; }\n"
+    ".carousel-frame .component-live { position: absolute; inset: 0; overflow: auto; }\n"
+    ".carousel-frame figcaption { position: absolute; left: 14px; bottom: 14px; z-index: 2; padding: 6px 9px; border-radius: 7px; background: rgba(9,11,16,.8); color: var(--muted); font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; backdrop-filter: blur(6px); }\n"
+    ".carousel-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }\n"
+    ".carousel-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }\n"
+    ".carousel-dot { appearance: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; background: transparent; color: var(--muted); cursor: pointer; font: 600 11px/1 ui-sans-serif, system-ui, sans-serif; }\n"
+    ".carousel-dot:hover { color: var(--ink); border-color: rgba(255,255,255,.2); }\n"
+    ".carousel-dot.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n"
+    
+    ".split { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 48px; align-items: center; }\n"
+    ".body { color: var(--muted); max-width: 56ch; }\n"
+    ".steps { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 18px; }\n"
+    ".steps li { display: grid; grid-template-columns: 36px 1fr; gap: 14px; }\n"
+    ".step-number { color: var(--accent); font: 700 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }\n"
+    ".steps strong { display: block; font-size: 15px; }\n"
+    ".steps p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }\n"
+    ".community { display: flex; align-items: center; justify-content: space-between; gap: 32px; margin: 20px 0 0; padding: clamp(28px, 5vw, 48px); border: 1px solid rgba(200,241,105,.22); border-radius: 20px; background: linear-gradient(120deg, rgba(200,241,105,.08), rgba(110,140,255,.06)); }\n"
+    ".community h2 { margin-bottom: 12px; }\n"
+    ".footer { max-width: 1180px; margin: 0 auto; padding: 28px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--dim); font-size: 12.5px; }\n"
+    ".footer-links { display: flex; gap: 18px; }\n"
+    ".footer a { color: var(--muted); text-decoration: none; }\n"
+    ".footer a:hover { color: var(--ink); }\n"
+    "@media (max-width: 900px) {\n"
+    "  .hero, .split, .editorial, .editorial.reverse { grid-template-columns: 1fr; gap: 32px; }\n"
+    "  .editorial-copy { position: static; }\n"
+    "  .workbench { grid-template-columns: 1fr; grid-auto-rows: 320px; }\n"
+    "  .community { align-items: flex-start; flex-direction: column; }\n"
+    "}\n"
+    "@media (max-width: 640px) {\n"
+    "  .nav-inner { padding: 14px 18px; gap: 14px; }\n"
+    "  .nav-links { gap: 12px; }\n"
+    "  .nav-links a { font-size: 12.5px; }\n"
+    "  main, .footer { padding-left: 18px; padding-right: 18px; }\n"
+    "  .grid.two { grid-template-columns: 1fr; }\n"
+    "  .footer { flex-direction: column; align-items: flex-start; }\n"
+    "}\n"))
