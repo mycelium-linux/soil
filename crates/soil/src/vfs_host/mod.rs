@@ -502,26 +502,33 @@ impl vfs::Host for VfsHost {
 
     fn read(&mut self, path: String, offset: u64, length: u32) -> Result<vfs::Chunk, vfs::Error> {
         let path = normalize_parent(&path)?;
-        self.refresh_view().map_err(|_| vfs::Error::Io)?;
-        let kind = self
-            .index_read()
-            .entry(&path)
-            .map(|node| node.kind)
-            .ok_or(vfs::Error::NotFound)?;
+        // A read is the hot path for every capture bundle. Refreshing the whole
+        // namespace here made every file read list every path; only refresh
+        // when the index genuinely does not know this file yet.
+        let existing = self.index_read().entry(&path).map(|node| {
+            (
+                node.kind,
+                node.entry.content_id.to_string(),
+                node.entry.size,
+            )
+        });
+        let (kind, content_id, size) = match existing {
+            Some(found) => found,
+            None => {
+                self.refresh_view().map_err(|_| vfs::Error::Io)?;
+                let index = self.index_read();
+                let node = index.entry(&path).ok_or(vfs::Error::NotFound)?;
+                (
+                    node.kind,
+                    node.entry.content_id.to_string(),
+                    node.entry.size,
+                )
+            }
+        };
         if kind != NodeKind::File {
             return Err(vfs::Error::IsDirectory);
         }
-        let content_id = self
-            .index_read()
-            .entry(&path)
-            .map(|node| node.entry.content_id.to_string())
-            .unwrap_or_default();
         let data = self.read_path(&path, offset, length)?;
-        let size = self
-            .index_read()
-            .entry(&path)
-            .map(|node| node.entry.size)
-            .unwrap_or(0);
         Ok(vfs::Chunk {
             offset,
             eof: offset.saturating_add(data.len() as u64) >= size,
